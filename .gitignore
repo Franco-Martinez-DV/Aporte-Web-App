@@ -7,3 +7,6 @@ dist/
 build/
 .vscode/
 .DS_Store
+
+backend/config/serviceAccountKey.json
+serviceAccountKey.json
