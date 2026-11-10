@@ -5,6 +5,7 @@ exports.obtenerCampanas = async (req, res) => {
     const campanas = await campanaService.obtenerTodas();
     res.status(200).json({ success: true, data: campanas });
   } catch (error) {
+    console.error('Error obtenerCampanas:', error);
     res.status(500).json({ success: false, error: 'Error al obtener campañas', details: error.message });
   }
 };
@@ -17,6 +18,7 @@ exports.obtenerCampanaPorId = async (req, res) => {
     }
     res.status(200).json({ success: true, data: campana });
   } catch (error) {
+    console.error('Error obtenerCampanaPorId:', error);
     res.status(500).json({ success: false, error: 'Error al buscar campaña', details: error.message });
   }
 };
@@ -30,6 +32,7 @@ exports.crearCampana = async (req, res) => {
     const nuevaCampana = await campanaService.crear(req.body);
     res.status(201).json({ success: true, data: nuevaCampana });
   } catch (error) {
+    console.error('Error crearCampana:', error);
     res.status(500).json({ success: false, error: 'Error al crear campaña', details: error.message });
   }
 };
@@ -42,6 +45,7 @@ exports.actualizarCampana = async (req, res) => {
     }
     res.status(200).json({ success: true, data: campanaActualizada });
   } catch (error) {
+    console.error('Error actualizarCampana:', error);
     res.status(500).json({ success: false, error: 'Error al actualizar campaña', details: error.message });
   }
 };
@@ -54,6 +58,7 @@ exports.eliminarCampana = async (req, res) => {
     }
     res.status(200).json({ success: true, message: 'Campaña eliminada correctamente' });
   } catch (error) {
+    console.error('Error eliminarCampana:', error);
     res.status(500).json({ success: false, error: 'Error al eliminar campaña', details: error.message });
   }
 };
@@ -70,6 +75,7 @@ exports.registrarAporte = async (req, res) => {
     }
     res.status(200).json({ success: true, data: campanaActualizada });
   } catch (error) {
+    console.error('Error registrarAporte:', error);
     res.status(500).json({ success: false, error: 'Error al registrar el aporte', details: error.message });
   }
 };
@@ -90,6 +96,36 @@ exports.registrarIngresoExterno = async (req, res) => {
     }
     res.status(200).json({ success: true, data: campanaActualizada });
   } catch (error) {
+    console.error('Error registrarIngresoExterno:', error);
     res.status(500).json({ success: false, error: 'Error al registrar ingreso externo', details: error.message });
+  }
+};
+
+exports.reservarSlot = async (req, res) => {
+  try {
+    const { idSlot, nombreEmpresa, cuit, logoUrl } = req.body;
+    
+    if (!idSlot || !nombreEmpresa || nombreEmpresa.trim() === '') {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'El ID del slot y el nombre de la empresa son obligatorios' 
+      });
+    }
+
+    const campanaActualizada = await campanaService.reservarSlot(req.params.id, {
+      idSlot,
+      nombreEmpresa,
+      cuit,
+      logoUrl
+    });
+
+    if (!campanaActualizada) {
+      return res.status(404).json({ success: false, error: 'Campaña no encontrada' });
+    }
+
+    res.status(200).json({ success: true, data: campanaActualizada });
+  } catch (error) {
+    console.error('Error reservarSlot:', error);
+    res.status(400).json({ success: false, error: error.message });
   }
 };

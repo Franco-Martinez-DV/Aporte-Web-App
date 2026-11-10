@@ -38,5 +38,10 @@ export default {
   async registrarIngresoExterno(id, datos) {
     const response = await api.post(`/campanas/${id}/ingreso-externo`, datos);
     return response.data.data;
+  },
+
+  async reservarSlot(id, datosSlot) {
+    const response = await api.post(`/campanas/${id}/reservar-slot`, datosSlot);
+    return response.data.data;
   }
 };
