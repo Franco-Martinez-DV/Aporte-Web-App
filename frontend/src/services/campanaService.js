@@ -28,5 +28,10 @@ export default {
   async eliminarCampana(id) {
     const response = await api.delete(`/campanas/${id}`);
     return response.data;
+  },
+
+  async registrarAporte(id, monto) {
+    const response = await api.post(`/campanas/${id}/aportar`, { monto: Number(monto) });
+    return response.data.data;
   }
 };

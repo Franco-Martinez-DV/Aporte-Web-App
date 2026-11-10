@@ -60,6 +60,22 @@ class CampanaService {
     await docRef.delete();
     return true;
   }
+
+  async aportar(id, monto) {
+    const docRef = db.collection(COLLECTION_NAME).doc(id);
+    const doc = await docRef.get();
+    if (!doc.exists) return null;
+
+    const recaudadoActual = Number(doc.data().recaudado) || 0;
+    const nuevoRecaudado = recaudadoActual + Number(monto);
+
+    await docRef.update({
+      recaudado: nuevoRecaudado,
+      fechaActualizacion: new Date().toISOString()
+    });
+
+    return { id, ...doc.data(), recaudado: nuevoRecaudado };
+  }
 }
 
 module.exports = new CampanaService();
