@@ -76,6 +76,32 @@ class CampanaService {
 
     return { id, ...doc.data(), recaudado: nuevoRecaudado };
   }
+
+  async registrarIngresoExterno(id, { monto, concepto, fecha }) {
+    const docRef = db.collection(COLLECTION_NAME).doc(id);
+    const doc = await docRef.get();
+    if (!doc.exists) return null;
+
+    const data = doc.data();
+    const recaudadoActual = Number(data.recaudado) || 0;
+    const nuevoRecaudado = recaudadoActual + Number(monto);
+
+    const ingresosExternos = data.ingresosExternos || [];
+    ingresosExternos.push({
+      monto: Number(monto),
+      concepto,
+      fecha: fecha || new Date().toISOString().split('T')[0],
+      fechaRegistro: new Date().toISOString()
+    });
+
+    await docRef.update({
+      recaudado: nuevoRecaudado,
+      ingresosExternos,
+      fechaActualizacion: new Date().toISOString()
+    });
+
+    return { id, ...data, recaudado: nuevoRecaudado, ingresosExternos };
+  }
 }
 
 module.exports = new CampanaService();

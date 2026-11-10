@@ -33,5 +33,10 @@ export default {
   async registrarAporte(id, monto) {
     const response = await api.post(`/campanas/${id}/aportar`, { monto: Number(monto) });
     return response.data.data;
+  },
+
+  async registrarIngresoExterno(id, datos) {
+    const response = await api.post(`/campanas/${id}/ingreso-externo`, datos);
+    return response.data.data;
   }
 };

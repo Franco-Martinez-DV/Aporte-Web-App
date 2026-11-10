@@ -8,5 +8,6 @@ router.post('/', campanaController.crearCampana);
 router.put('/:id', campanaController.actualizarCampana);
 router.delete('/:id', campanaController.eliminarCampana);
 router.post('/:id/aportar', campanaController.registrarAporte);
+router.post('/:id/ingreso-externo', campanaController.registrarIngresoExterno);
 
 module.exports = router;

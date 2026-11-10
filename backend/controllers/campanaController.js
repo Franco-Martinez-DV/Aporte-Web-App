@@ -73,3 +73,23 @@ exports.registrarAporte = async (req, res) => {
     res.status(500).json({ success: false, error: 'Error al registrar el aporte', details: error.message });
   }
 };
+
+exports.registrarIngresoExterno = async (req, res) => {
+  try {
+    const { monto, concepto, fecha } = req.body;
+    if (!monto || isNaN(monto) || Number(monto) <= 0) {
+      return res.status(400).json({ success: false, error: 'El monto ingresado debe ser un valor positivo mayor a 0' });
+    }
+    if (!concepto || concepto.trim() === '') {
+      return res.status(400).json({ success: false, error: 'El concepto del ingreso externo es obligatorio' });
+    }
+
+    const campanaActualizada = await campanaService.registrarIngresoExterno(req.params.id, { monto, concepto, fecha });
+    if (!campanaActualizada) {
+      return res.status(404).json({ success: false, error: 'Campaña no encontrada' });
+    }
+    res.status(200).json({ success: true, data: campanaActualizada });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Error al registrar ingreso externo', details: error.message });
+  }
+};
