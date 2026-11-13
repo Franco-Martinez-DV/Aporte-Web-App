@@ -14,6 +14,7 @@ import ModalTransparencia from './components/ModalTransparencia.vue';
 
 const campanas = ref([]);
 const cargando = ref(true);
+const enviando = ref(false);
 
 const textoBusqueda = ref('');
 const categoriaSeleccionada = ref('Todas');
@@ -71,6 +72,8 @@ const abrirModalConCampana = (campana, tipoModal) => {
 };
 
 const guardarCampana = async (datos) => {
+  if (enviando.value) return;
+  enviando.value = true;
   try {
     if (modoEdicion.value && campanaSeleccionada.value) {
       await campanaService.actualizarCampana(campanaSeleccionada.value.id, datos);
@@ -81,30 +84,42 @@ const guardarCampana = async (datos) => {
     await cargarCampanas();
   } catch (error) {
     alert(error.response?.data?.error || 'Error al guardar la campaña');
+  } finally {
+    enviando.value = false;
   }
 };
 
 const procesarAporte = async (monto) => {
+  if (enviando.value) return;
+  enviando.value = true;
   try {
     await campanaService.registrarAporte(campanaSeleccionada.value.id, monto);
     mostrandoModalAporte.value = false;
     await cargarCampanas();
   } catch (error) {
     alert(error.response?.data?.error || 'Error al registrar el aporte');
+  } finally {
+    enviando.value = false;
   }
 };
 
 const guardarIngresoExterno = async (datos) => {
+  if (enviando.value) return;
+  enviando.value = true;
   try {
     await campanaService.registrarIngresoExterno(campanaSeleccionada.value.id, datos);
     mostrandoModalIngresoExterno.value = false;
     await cargarCampanas();
   } catch (error) {
     alert(error.response?.data?.error || 'Error al registrar el ingreso externo');
+  } finally {
+    enviando.value = false;
   }
 };
 
 const procesarReservaSlot = async (payload) => {
+  if (enviando.value) return;
+  enviando.value = true;
   try {
     const actualizada = await campanaService.reservarSlot(campanaSeleccionada.value.id, payload);
     campanaSeleccionada.value = actualizada;
@@ -112,6 +127,8 @@ const procesarReservaSlot = async (payload) => {
     await cargarCampanas();
   } catch (error) {
     alert(error.response?.data?.error || 'Error al reservar el espacio publicitario');
+  } finally {
+    enviando.value = false;
   }
 };
 
@@ -186,6 +203,7 @@ onMounted(() => {
       :visible="mostrandoModalForm"
       :modo-edicion="modoEdicion"
       :campana-inicial="campanaSeleccionada"
+      :enviando="enviando"
       @cerrar="mostrandoModalForm = false"
       @guardar="guardarCampana"
     />
@@ -193,6 +211,7 @@ onMounted(() => {
     <ModalAporte
       :visible="mostrandoModalAporte"
       :campana="campanaSeleccionada"
+      :enviando="enviando"
       @cerrar="mostrandoModalAporte = false"
       @confirmar="procesarAporte"
     />
@@ -200,6 +219,7 @@ onMounted(() => {
     <ModalIngresoExterno
       :visible="mostrandoModalIngresoExterno"
       :campana="campanaSeleccionada"
+      :enviando="enviando"
       @cerrar="mostrandoModalIngresoExterno = false"
       @guardar="guardarIngresoExterno"
     />
@@ -207,6 +227,7 @@ onMounted(() => {
     <ModalCamisetaVirtual
       :visible="mostrandoModalCamiseta"
       :campana="campanaSeleccionada"
+      :enviando="enviando"
       @cerrar="mostrandoModalCamiseta = false"
       @reservar="procesarReservaSlot"
     />

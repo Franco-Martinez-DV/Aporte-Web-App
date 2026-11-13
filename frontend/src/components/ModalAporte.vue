@@ -3,7 +3,8 @@ import { ref, watch } from 'vue';
 
 const props = defineProps({
   visible: { type: Boolean, required: true },
-  campana: { type: Object, default: null }
+  campana: { type: Object, default: null },
+  enviando: { type: Boolean, default: false }
 });
 
 const emit = defineEmits(['cerrar', 'confirmar']);
@@ -17,6 +18,7 @@ watch(
 );
 
 const enviarAporte = () => {
+  if (props.enviando) return;
   if (!montoInput.value || montoInput.value <= 0) {
     alert('Por favor ingresá un monto mayor a 0');
     return;
@@ -48,16 +50,18 @@ const enviarAporte = () => {
         <div class="flex justify-end space-x-3 pt-4 border-t border-slate-100">
           <button
             type="button"
+            :disabled="enviando"
             @click="$emit('cerrar')"
-            class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition"
+            class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancelar
           </button>
           <button
             type="submit"
-            class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow transition"
+            :disabled="enviando"
+            class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Confirmar Aporte
+            {{ enviando ? 'Procesando...' : 'Confirmar Aporte' }}
           </button>
         </div>
       </form>

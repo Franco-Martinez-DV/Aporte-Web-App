@@ -37,6 +37,7 @@ class CampanaService {
       titulo: datos.titulo || '',
       descripcion: datos.descripcion || '',
       categoria: datos.categoria || 'Deportista Individual',
+      imagenUrl: datos.imagenUrl || '',
       montoObjetivo: Number(datos.montoObjetivo) || 0,
       recaudado: Number(datos.recaudado) || 0,
       fechaLimite: datos.fechaLimite || '',

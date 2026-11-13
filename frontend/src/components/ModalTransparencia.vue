@@ -43,7 +43,6 @@ const aportesDirectos = computed(() => {
         <button @click="$emit('cerrar')" class="text-slate-400 hover:text-slate-600 font-bold text-lg px-2">✕</button>
       </div>
 
-      <!-- Resumen de composición de fondos -->
       <div class="grid grid-cols-3 gap-3 mb-6">
         <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
           <p class="text-[11px] font-bold text-emerald-700 uppercase">Aportes Web/App</p>
@@ -59,7 +58,6 @@ const aportesDirectos = computed(() => {
         </div>
       </div>
 
-      <!-- Sponsors confirmados -->
       <div class="mb-6">
         <h4 class="text-xs font-bold text-slate-700 uppercase mb-2">
           Sponsors Confirmados en Camiseta ({{ sponsorsConfirmados.length }})
@@ -81,7 +79,6 @@ const aportesDirectos = computed(() => {
         </p>
       </div>
 
-      <!-- Ingresos externos declarados -->
       <div class="mb-6">
         <h4 class="text-xs font-bold text-slate-700 uppercase mb-2">
           Ingresos Externos Declarados ({{ ingresosExternos.length }})

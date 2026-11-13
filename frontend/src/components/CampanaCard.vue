@@ -1,4 +1,5 @@
 <script setup>
+import { ref, watch } from 'vue';
 import { calcularPorcentaje, formatearMoneda } from '../helpers/formatters';
 import {
   Shirt,
@@ -7,10 +8,11 @@ import {
   QrCode,
   FileText,
   Pencil,
-  Trash2
+  Trash2,
+  Trophy
 } from 'lucide-vue-next';
 
-defineProps({
+const props = defineProps({
   campana: { type: Object, required: true }
 });
 
@@ -23,27 +25,56 @@ defineEmits([
   'editar',
   'eliminar'
 ]);
+
+const imagenRota = ref(false);
+
+watch(
+  () => props.campana.imagenUrl,
+  () => {
+    imagenRota.value = false;
+  }
+);
 </script>
 
 <template>
   <article class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between hover:shadow-md transition">
-    <div class="p-5">
-      <div class="flex justify-between items-center mb-3 gap-2">
-        <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded uppercase tracking-wider">
-          {{ campana.categoria }}
-        </span>
-        <span
-          :class="[
-            'text-xs font-bold px-2.5 py-1 rounded uppercase',
-            campana.tipo === 'patrocinio' ? 'bg-blue-600 text-white' : 'bg-emerald-100 text-emerald-700'
-          ]"
+    <div>
+      <!-- Portada de la campaña -->
+      <div class="w-full h-44 bg-slate-100 overflow-hidden relative">
+        <img
+          v-if="campana.imagenUrl && !imagenRota"
+          :src="campana.imagenUrl"
+          :alt="campana.titulo"
+          @error="imagenRota = true"
+          class="w-full h-full object-cover"
+        />
+        <div
+          v-else
+          class="w-full h-full bg-gradient-to-br from-[#0077FF] to-blue-800 flex flex-col items-center justify-center text-white/90"
         >
-          {{ campana.tipo === 'patrocinio' ? 'Camiseta Virtual' : 'Donación' }}
-        </span>
+          <Trophy class="w-9 h-9 mb-1 opacity-85" />
+          <span class="text-[11px] font-bold uppercase tracking-widest opacity-80">Aporte Deportivo</span>
+        </div>
       </div>
 
-      <h3 class="text-lg font-bold text-slate-900 mb-2 line-clamp-1">{{ campana.titulo }}</h3>
-      <p class="text-slate-600 text-sm mb-4 line-clamp-3">{{ campana.descripcion }}</p>
+      <div class="p-5 pb-0">
+        <div class="flex justify-between items-center mb-3 gap-2">
+          <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded uppercase tracking-wider">
+            {{ campana.categoria }}
+          </span>
+          <span
+            :class="[
+              'text-xs font-bold px-2.5 py-1 rounded uppercase',
+              campana.tipo === 'patrocinio' ? 'bg-blue-600 text-white' : 'bg-emerald-100 text-emerald-700'
+            ]"
+          >
+            {{ campana.tipo === 'patrocinio' ? 'Camiseta Virtual' : 'Donación' }}
+          </span>
+        </div>
+
+        <h3 class="text-lg font-bold text-slate-900 mb-2 line-clamp-1">{{ campana.titulo }}</h3>
+        <p class="text-slate-600 text-sm mb-4 line-clamp-3">{{ campana.descripcion }}</p>
+      </div>
     </div>
 
     <div class="px-5 pb-5 pt-0">

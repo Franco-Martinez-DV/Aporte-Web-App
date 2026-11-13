@@ -4,7 +4,8 @@ import { formatearMoneda } from '../helpers/formatters';
 
 const props = defineProps({
   visible: { type: Boolean, required: true },
-  campana: { type: Object, default: null }
+  campana: { type: Object, default: null },
+  enviando: { type: Boolean, default: false }
 });
 
 const emit = defineEmits(['cerrar', 'reservar']);
@@ -25,11 +26,12 @@ watch(
 );
 
 const seleccionarSlot = (slot) => {
-  if (slot.estado === 'reservado') return;
+  if (props.enviando || slot.estado === 'reservado') return;
   slotSeleccionado.value = slot;
 };
 
 const confirmarReserva = () => {
+  if (props.enviando) return;
   if (!slotSeleccionado.value) {
     alert('Seleccioná un espacio disponible en la camiseta');
     return;
@@ -56,7 +58,13 @@ const confirmarReserva = () => {
           <h3 class="text-xl font-bold text-slate-900">Camiseta Virtual</h3>
           <p class="text-xs text-slate-500">Seleccioná un espacio publicitario libre para promocionar tu marca.</p>
         </div>
-        <button @click="$emit('cerrar')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">✕</button>
+        <button
+          :disabled="enviando"
+          @click="$emit('cerrar')"
+          class="text-slate-400 hover:text-slate-600 text-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          ✕
+        </button>
       </div>
 
       <div class="bg-slate-900 rounded-xl p-6 mb-6 text-white text-center relative shadow-inner">
@@ -127,16 +135,18 @@ const confirmarReserva = () => {
           <div class="flex justify-end gap-3 pt-2">
             <button
               type="button"
+              :disabled="enviando"
               @click="slotSeleccionado = null"
-              class="px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-200 rounded-lg"
+              class="px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              class="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition"
+              :disabled="enviando"
+              class="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Confirmar Patrocinio (${{ formatearMoneda(slotSeleccionado.precio) }})
+              {{ enviando ? 'Reservando...' : `Confirmar Patrocinio ($${formatearMoneda(slotSeleccionado.precio)})` }}
             </button>
           </div>
         </form>
