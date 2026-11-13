@@ -1,5 +1,11 @@
 const campanaService = require('../services/campanaService');
 
+const obtenerFechaHoy = () => {
+  const ahora = new Date();
+  const local = new Date(ahora.getTime() - ahora.getTimezoneOffset() * 60000);
+  return local.toISOString().split('T')[0];
+};
+
 exports.obtenerCampanas = async (req, res) => {
   try {
     const campanas = await campanaService.obtenerTodas();
@@ -29,7 +35,22 @@ exports.crearCampana = async (req, res) => {
     if (!titulo || !descripcion || !categoria || !montoObjetivo || !fechaLimite) {
       return res.status(400).json({ success: false, error: 'Faltan campos obligatorios' });
     }
-    const nuevaCampana = await campanaService.crear(req.body);
+
+    if (isNaN(montoObjetivo) || Number(montoObjetivo) < 10000) {
+      return res.status(400).json({ success: false, error: 'El monto objetivo mínimo es de $10.000' });
+    }
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaLimite) || fechaLimite < obtenerFechaHoy()) {
+      return res.status(400).json({ success: false, error: 'La fecha límite no puede ser anterior al día de hoy' });
+    }
+
+    const datosNuevaCampana = {
+      ...req.body,
+      montoObjetivo: Number(montoObjetivo),
+      recaudado: 0
+    };
+
+    const nuevaCampana = await campanaService.crear(datosNuevaCampana);
     res.status(201).json({ success: true, data: nuevaCampana });
   } catch (error) {
     console.error('Error crearCampana:', error);
@@ -39,6 +60,16 @@ exports.crearCampana = async (req, res) => {
 
 exports.actualizarCampana = async (req, res) => {
   try {
+    const { montoObjetivo, fechaLimite } = req.body;
+
+    if (montoObjetivo !== undefined && (isNaN(montoObjetivo) || Number(montoObjetivo) < 10000)) {
+      return res.status(400).json({ success: false, error: 'El monto objetivo mínimo es de $10.000' });
+    }
+
+    if (fechaLimite && (!/^\d{4}-\d{2}-\d{2}$/.test(fechaLimite) || fechaLimite < obtenerFechaHoy())) {
+      return res.status(400).json({ success: false, error: 'La fecha límite no puede ser anterior al día de hoy' });
+    }
+
     const campanaActualizada = await campanaService.actualizar(req.params.id, req.body);
     if (!campanaActualizada) {
       return res.status(404).json({ success: false, error: 'Campaña no encontrada' });
@@ -104,11 +135,11 @@ exports.registrarIngresoExterno = async (req, res) => {
 exports.reservarSlot = async (req, res) => {
   try {
     const { idSlot, nombreEmpresa, cuit, logoUrl } = req.body;
-    
+
     if (!idSlot || !nombreEmpresa || nombreEmpresa.trim() === '') {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'El ID del slot y el nombre de la empresa son obligatorios' 
+      return res.status(400).json({
+        success: false,
+        error: 'El ID del slot y el nombre de la empresa son obligatorios'
       });
     }
 

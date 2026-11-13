@@ -43,6 +43,7 @@ class CampanaService {
       estado: 'activa',
       tipo: tipo,
       slotsIndumentaria: slotsIndumentaria,
+      ingresosExternos: [],
       fechaCreacion: new Date().toISOString()
     };
 

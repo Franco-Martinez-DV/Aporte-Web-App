@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 
 const props = defineProps({
   visible: { type: Boolean, required: true },
@@ -8,6 +8,12 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['cerrar', 'guardar']);
+
+const fechaMinima = computed(() => {
+  const ahora = new Date();
+  const local = new Date(ahora.getTime() - ahora.getTimezoneOffset() * 60000);
+  return local.toISOString().split('T')[0];
+});
 
 const formulario = ref({
   titulo: '',
@@ -43,6 +49,14 @@ watch(
 );
 
 const enviarFormulario = () => {
+  if (formulario.value.montoObjetivo < 10000) {
+    alert('El monto objetivo mínimo es de $10.000.');
+    return;
+  }
+  if (formulario.value.fechaLimite < fechaMinima.value) {
+    alert('La fecha límite no puede ser anterior al día de hoy.');
+    return;
+  }
   emit('guardar', { ...formulario.value });
 };
 </script>
@@ -117,30 +131,22 @@ const enviarFormulario = () => {
             <input
               v-model.number="formulario.montoObjetivo"
               type="number"
-              min="1000"
+              min="10000"
               required
               class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
           </div>
+
           <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Monto Recaudado ($)</label>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Fecha Límite</label>
             <input
-              v-model.number="formulario.recaudado"
-              type="number"
-              min="0"
+              v-model="formulario.fechaLimite"
+              type="date"
+              :min="fechaMinima"
+              required
               class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
           </div>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Fecha Límite</label>
-          <input
-            v-model="formulario.fechaLimite"
-            type="date"
-            required
-            class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
-          />
         </div>
 
         <div class="flex justify-end space-x-3 pt-4 border-t border-slate-100">
