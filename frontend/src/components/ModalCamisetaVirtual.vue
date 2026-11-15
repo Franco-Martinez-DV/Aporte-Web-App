@@ -1,5 +1,6 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
+import { Shirt, Building2, Trophy } from 'lucide-vue-next';
 import { formatearMoneda } from '../helpers/formatters';
 
 const props = defineProps({
@@ -15,6 +16,44 @@ const formularioSponsor = ref({
   nombreEmpresa: '',
   cuit: '',
   logoUrl: ''
+});
+
+const tituloModal = computed(() => {
+  const cat = props.campana?.categoria;
+  if (cat === 'Club') return 'Espacios de Patrocinio del Club';
+  if (cat === 'Liga/Torneo') return 'Patrocinio de Liga / Torneo';
+  return 'Patrocinio de camiseta';
+});
+
+const gruposSlots = computed(() => {
+  const slots = props.campana?.slotsIndumentaria || [];
+  const gruposMap = {
+    indumentaria: {
+      clave: 'indumentaria',
+      titulo: 'Indumentaria Oficial (Camiseta)',
+      icono: Shirt,
+      items: []
+    },
+    infraestructura: {
+      clave: 'infraestructura',
+      titulo: 'Estadio, Predio y Cartelería en Paredes',
+      icono: Building2,
+      items: []
+    },
+    torneo: {
+      clave: 'torneo',
+      titulo: 'Naming y Cartelería de Liga / Torneo',
+      icono: Trophy,
+      items: []
+    }
+  };
+
+  for (const slot of slots) {
+    const clave = slot.grupo && gruposMap[slot.grupo] ? slot.grupo : 'indumentaria';
+    gruposMap[clave].items.push(slot);
+  }
+
+  return Object.values(gruposMap).filter(g => g.items.length > 0);
 });
 
 watch(
@@ -33,7 +72,7 @@ const seleccionarSlot = (slot) => {
 const confirmarReserva = () => {
   if (props.enviando) return;
   if (!slotSeleccionado.value) {
-    alert('Seleccioná un espacio disponible en la camiseta');
+    alert('Seleccioná un espacio publicitario disponible');
     return;
   }
   if (!formularioSponsor.value.nombreEmpresa.trim()) {
@@ -55,7 +94,7 @@ const confirmarReserva = () => {
     <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center mb-4 border-b pb-3">
         <div>
-          <h3 class="text-xl font-bold text-slate-900">Camiseta Virtual</h3>
+          <h3 class="text-xl font-bold text-slate-900">{{ tituloModal }}</h3>
           <p class="text-xs text-slate-500">Seleccioná un espacio publicitario libre para promocionar tu marca.</p>
         </div>
         <button
@@ -67,38 +106,45 @@ const confirmarReserva = () => {
         </button>
       </div>
 
-      <div class="bg-slate-900 rounded-xl p-6 mb-6 text-white text-center relative shadow-inner">
-        <div class="uppercase text-xs font-bold text-slate-400 tracking-widest mb-4">
-          Indumentaria Oficial del Proyecto
-        </div>
+      <div class="space-y-4 mb-6">
+        <div
+          v-for="grupo in gruposSlots"
+          :key="grupo.clave"
+          class="bg-slate-900 rounded-xl p-5 text-white text-center relative shadow-inner"
+        >
+          <div class="inline-flex items-center justify-center gap-2 uppercase text-xs font-bold text-slate-300 tracking-widest mb-4">
+            <component :is="grupo.icono" class="w-4 h-4 text-blue-400" />
+            <span>{{ grupo.titulo }}</span>
+          </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <div
-            v-for="slot in (campana?.slotsIndumentaria || [])"
-            :key="slot.idSlot"
-            @click="seleccionarSlot(slot)"
-            :class="[
-              'p-4 rounded-xl border-2 transition flex flex-col items-center justify-center min-h-[110px] cursor-pointer relative overflow-hidden',
-              slot.estado === 'reservado'
-                ? 'border-blue-500 bg-blue-900/40 opacity-90 cursor-not-allowed'
-                : (slotSeleccionado?.idSlot === slot.idSlot
-                  ? 'border-blue-400 bg-blue-950/60 ring-2 ring-blue-400'
-                  : 'border-slate-700 bg-slate-800 hover:border-blue-400 hover:bg-slate-750')
-            ]"
-          >
-            <span class="text-xs font-bold text-slate-300 mb-1">{{ slot.posicion }}</span>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-3.5">
+            <div
+              v-for="slot in grupo.items"
+              :key="slot.idSlot"
+              @click="seleccionarSlot(slot)"
+              :class="[
+                'p-4 rounded-xl border-2 transition flex flex-col items-center justify-center min-h-[110px] cursor-pointer relative overflow-hidden',
+                slot.estado === 'reservado'
+                  ? 'border-blue-500 bg-blue-900/40 opacity-90 cursor-not-allowed'
+                  : (slotSeleccionado?.idSlot === slot.idSlot
+                    ? 'border-blue-400 bg-blue-950/60 ring-2 ring-blue-400'
+                    : 'border-slate-700 bg-slate-800 hover:border-blue-400 hover:bg-slate-750')
+              ]"
+            >
+              <span class="text-xs font-bold text-slate-300 mb-1 leading-snug">{{ slot.posicion }}</span>
 
-            <template v-if="slot.estado === 'reservado'">
-              <span class="text-emerald-400 font-extrabold text-sm uppercase tracking-wide">
-                {{ slot.sponsor?.nombreEmpresa }}
-              </span>
-              <span class="text-[10px] text-blue-300 mt-1">Espacio Ocupado</span>
-            </template>
+              <template v-if="slot.estado === 'reservado'">
+                <span class="text-emerald-400 font-extrabold text-sm uppercase tracking-wide">
+                  {{ slot.sponsor?.nombreEmpresa }}
+                </span>
+                <span class="text-[10px] text-blue-300 mt-1">Espacio Ocupado</span>
+              </template>
 
-            <template v-else>
-              <span class="text-lg font-bold text-emerald-400">${{ formatearMoneda(slot.precio) }}</span>
-              <span class="text-[10px] text-slate-400 mt-1">Disponible</span>
-            </template>
+              <template v-else>
+                <span class="text-lg font-bold text-emerald-400">${{ formatearMoneda(slot.precio) }}</span>
+                <span class="text-[10px] text-slate-400 mt-1">Disponible</span>
+              </template>
+            </div>
           </div>
         </div>
       </div>

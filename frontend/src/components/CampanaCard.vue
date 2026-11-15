@@ -74,7 +74,7 @@ watch(
               campana.tipo === 'patrocinio' ? 'bg-blue-600 text-white' : 'bg-emerald-100 text-emerald-700'
             ]"
           >
-            {{ campana.tipo === 'patrocinio' ? 'Camiseta Virtual' : 'Donación' }}
+            {{ campana.tipo === 'patrocinio' ? 'Patrocinio' : 'Donación' }}
           </span>
         </div>
 
@@ -104,7 +104,7 @@ watch(
             class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2 text-sm shadow-sm"
           >
             <Shirt class="w-4 h-4" />
-            <span>Ver / Patrocinar Camiseta Virtual</span>
+            <span>Ver / Patrocinar</span>
           </button>
 
           <button

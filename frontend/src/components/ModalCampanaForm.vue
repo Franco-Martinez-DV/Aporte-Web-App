@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { ImagePlus, Trash2 } from 'lucide-vue-next';
+import { ImagePlus, Trash2, Shirt, Building2, Trophy } from 'lucide-vue-next';
 
 const props = defineProps({
   visible: { type: Boolean, required: true },
@@ -25,10 +25,17 @@ const formulario = ref({
   descripcion: '',
   categoria: 'Deportista Individual',
   tipo: 'donacion',
+  modalidadPatrocinio: 'ambos',
   imagenUrl: '',
   montoObjetivo: 100000,
   recaudado: 0,
   fechaLimite: ''
+});
+
+const etiquetaBotonPatrocinio = computed(() => {
+  if (formulario.value.categoria === 'Club') return 'Patrocinio de Club';
+  if (formulario.value.categoria === 'Liga/Torneo') return 'Patrocinio de Liga/Torneo';
+  return 'Camiseta';
 });
 
 watch(
@@ -42,7 +49,8 @@ watch(
       formulario.value = {
         ...props.campanaInicial,
         imagenUrl: props.campanaInicial.imagenUrl || '',
-        tipo: props.campanaInicial.tipo || 'donacion'
+        tipo: props.campanaInicial.tipo || 'donacion',
+        modalidadPatrocinio: props.campanaInicial.modalidadPatrocinio || 'ambos'
       };
     } else {
       formulario.value = {
@@ -50,6 +58,7 @@ watch(
         descripcion: '',
         categoria: 'Deportista Individual',
         tipo: 'donacion',
+        modalidadPatrocinio: 'ambos',
         imagenUrl: '',
         montoObjetivo: 100000,
         recaudado: 0,
@@ -135,27 +144,113 @@ const enviarFormulario = () => {
 
       <form @submit.prevent="enviarFormulario" class="space-y-4">
         <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Categoría</label>
+          <select
+            v-model="formulario.categoria"
+            :disabled="modoEdicion && formulario.tipo === 'patrocinio'"
+            class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:bg-slate-100 disabled:text-slate-500"
+          >
+            <option value="Deportista Individual">Deportista Individual</option>
+            <option value="Club">Club</option>
+            <option value="Liga/Torneo">Liga/Torneo</option>
+          </select>
+        </div>
+
+        <div>
           <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Tipo de Campaña</label>
           <div class="grid grid-cols-2 gap-3">
             <label
               :class="[
-                'border rounded-lg p-3 text-center cursor-pointer transition text-xs font-bold',
+                'border rounded-lg p-3 text-center transition text-xs font-bold',
+                modoEdicion ? 'cursor-not-allowed opacity-75' : 'cursor-pointer',
                 formulario.tipo === 'donacion' ? 'border-blue-600 bg-blue-50 text-blue-800' : 'border-slate-300 text-slate-600'
               ]"
             >
-              <input type="radio" v-model="formulario.tipo" value="donacion" class="sr-only" />
+              <input type="radio" v-model="formulario.tipo" value="donacion" :disabled="modoEdicion" class="sr-only" />
               Donación Estándar
             </label>
             <label
               :class="[
-                'border rounded-lg p-3 text-center cursor-pointer transition text-xs font-bold',
+                'border rounded-lg p-3 text-center transition text-xs font-bold',
+                modoEdicion ? 'cursor-not-allowed opacity-75' : 'cursor-pointer',
                 formulario.tipo === 'patrocinio' ? 'border-blue-700 bg-blue-600 text-white' : 'border-slate-300 text-slate-600'
               ]"
             >
-              <input type="radio" v-model="formulario.tipo" value="patrocinio" class="sr-only" />
-              Camiseta Virtual
+              <input type="radio" v-model="formulario.tipo" value="patrocinio" :disabled="modoEdicion" class="sr-only" />
+              {{ etiquetaBotonPatrocinio }}
             </label>
           </div>
+        </div>
+
+        <div v-if="formulario.tipo === 'patrocinio'" class="bg-blue-50/80 border border-blue-200 rounded-xl p-3.5 text-xs text-slate-700">
+          <template v-if="formulario.categoria === 'Deportista Individual'">
+            <div class="flex items-center gap-2 font-bold text-blue-900 mb-1">
+              <Shirt class="w-4 h-4 text-blue-600" />
+              <span>Grilla de Indumentaria Oficial (6 espacios)</span>
+            </div>
+            <p class="text-slate-600">
+              Se habilitarán espacios publicitarios en Pecho Principal, Pecho Secundario, Mangas, Espalda Superior y Zócalo Inferior.
+            </p>
+          </template>
+
+          <template v-else-if="formulario.categoria === 'Club'">
+            <div class="flex items-center gap-2 font-bold text-blue-900 mb-2">
+              <Building2 class="w-4 h-4 text-blue-600" />
+              <span>Espacios Publicitarios del Club</span>
+            </div>
+
+            <div v-if="!modoEdicion" class="grid grid-cols-3 gap-2 mb-2">
+              <label
+                :class="[
+                  'border rounded-lg p-2 text-center cursor-pointer font-semibold transition',
+                  formulario.modalidadPatrocinio === 'ambos' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-300'
+                ]"
+              >
+                <input type="radio" v-model="formulario.modalidadPatrocinio" value="ambos" class="sr-only" />
+                Camiseta + Predio
+              </label>
+              <label
+                :class="[
+                  'border rounded-lg p-2 text-center cursor-pointer font-semibold transition',
+                  formulario.modalidadPatrocinio === 'camiseta' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-300'
+                ]"
+              >
+                <input type="radio" v-model="formulario.modalidadPatrocinio" value="camiseta" class="sr-only" />
+                Solo Camiseta
+              </label>
+              <label
+                :class="[
+                  'border rounded-lg p-2 text-center cursor-pointer font-semibold transition',
+                  formulario.modalidadPatrocinio === 'instalaciones' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-300'
+                ]"
+              >
+                <input type="radio" v-model="formulario.modalidadPatrocinio" value="instalaciones" class="sr-only" />
+                Solo Instalaciones
+              </label>
+            </div>
+
+            <p class="text-slate-600">
+              <span v-if="formulario.modalidadPatrocinio === 'camiseta'">
+                Incluye los 6 espacios publicitarios en la camiseta oficial del club.
+              </span>
+              <span v-else-if="formulario.modalidadPatrocinio === 'instalaciones'">
+                Incluye Naming del Estadio/Predio y 3 espacios de cartelería en paredes del club.
+              </span>
+              <span v-else>
+                Incluye los 6 espacios en la camiseta del club más Naming del Estadio/Predio y 3 espacios de cartelería en paredes.
+              </span>
+            </p>
+          </template>
+
+          <template v-else-if="formulario.categoria === 'Liga/Torneo'">
+            <div class="flex items-center gap-2 font-bold text-blue-900 mb-1">
+              <Trophy class="w-4 h-4 text-blue-600" />
+              <span>Grilla de Patrocinio de Liga / Torneo (4 espacios)</span>
+            </div>
+            <p class="text-slate-600">
+              Se habilitarán Naming Oficial de la Liga/Torneo, Auspicio de Premios y Trofeos, y 2 espacios de Cartelería del evento.
+            </p>
+          </template>
         </div>
 
         <div>
@@ -202,18 +297,6 @@ const enviarFormulario = () => {
             required
             class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Categoría</label>
-          <select
-            v-model="formulario.categoria"
-            class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
-          >
-            <option value="Deportista Individual">Deportista Individual</option>
-            <option value="Club">Club</option>
-            <option value="Liga/Torneo">Liga/Torneo</option>
-          </select>
         </div>
 
         <div>

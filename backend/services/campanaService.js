@@ -1,14 +1,46 @@
 const { db } = require('../config/firebase');
 const COLLECTION_NAME = 'campanas';
 
-const SLOTS_PREDETERMINADOS = [
-  { idSlot: 'pecho_principal', posicion: 'Pecho Principal', precio: 50000, estado: 'disponible', sponsor: null },
-  { idSlot: 'pecho_secundario', posicion: 'Pecho Secundario', precio: 30000, estado: 'disponible', sponsor: null },
-  { idSlot: 'manga_izq', posicion: 'Manga Izquierda', precio: 20000, estado: 'disponible', sponsor: null },
-  { idSlot: 'manga_der', posicion: 'Manga Derecha', precio: 20000, estado: 'disponible', sponsor: null },
-  { idSlot: 'espalda_sup', posicion: 'Espalda Superior', precio: 40000, estado: 'disponible', sponsor: null },
-  { idSlot: 'zocalo_inf', posicion: 'Zócalo Inferior', precio: 25000, estado: 'disponible', sponsor: null }
+const SLOTS_INDUMENTARIA = [
+  { idSlot: 'pecho_principal', grupo: 'indumentaria', posicion: 'Pecho Principal', precio: 50000, estado: 'disponible', sponsor: null },
+  { idSlot: 'pecho_secundario', grupo: 'indumentaria', posicion: 'Pecho Secundario', precio: 30000, estado: 'disponible', sponsor: null },
+  { idSlot: 'manga_izq', grupo: 'indumentaria', posicion: 'Manga Izquierda', precio: 20000, estado: 'disponible', sponsor: null },
+  { idSlot: 'manga_der', grupo: 'indumentaria', posicion: 'Manga Derecha', precio: 20000, estado: 'disponible', sponsor: null },
+  { idSlot: 'espalda_sup', grupo: 'indumentaria', posicion: 'Espalda Superior', precio: 40000, estado: 'disponible', sponsor: null },
+  { idSlot: 'zocalo_inf', grupo: 'indumentaria', posicion: 'Zócalo Inferior', precio: 25000, estado: 'disponible', sponsor: null }
 ];
+
+const SLOTS_CLUB_INSTALACIONES = [
+  { idSlot: 'naming_estadio', grupo: 'infraestructura', posicion: 'Naming Estadio / Predio', precio: 120000, estado: 'disponible', sponsor: null },
+  { idSlot: 'pared_principal', grupo: 'infraestructura', posicion: 'Cartelería Pared Principal', precio: 60000, estado: 'disponible', sponsor: null },
+  { idSlot: 'pared_lateral_a', grupo: 'infraestructura', posicion: 'Cartelería Pared Lateral A', precio: 40000, estado: 'disponible', sponsor: null },
+  { idSlot: 'pared_lateral_b', grupo: 'infraestructura', posicion: 'Cartelería Pared Lateral B', precio: 40000, estado: 'disponible', sponsor: null }
+];
+
+const SLOTS_LIGA_TORNEO = [
+  { idSlot: 'naming_liga', grupo: 'torneo', posicion: 'Naming Oficial Liga / Torneo', precio: 150000, estado: 'disponible', sponsor: null },
+  { idSlot: 'auspicio_premio', grupo: 'torneo', posicion: 'Auspicio Premios y Trofeos', precio: 80000, estado: 'disponible', sponsor: null },
+  { idSlot: 'carteleria_evento_1', grupo: 'torneo', posicion: 'Cartelería Central del Evento', precio: 50000, estado: 'disponible', sponsor: null },
+  { idSlot: 'carteleria_evento_2', grupo: 'torneo', posicion: 'Cartelería Acceso / Mesa de Control', precio: 35000, estado: 'disponible', sponsor: null }
+];
+
+function generarSlotsPorCategoria(categoria, modalidadPatrocinio = 'ambos') {
+  if (categoria === 'Club') {
+    if (modalidadPatrocinio === 'camiseta') {
+      return JSON.parse(JSON.stringify(SLOTS_INDUMENTARIA));
+    }
+    if (modalidadPatrocinio === 'instalaciones') {
+      return JSON.parse(JSON.stringify(SLOTS_CLUB_INSTALACIONES));
+    }
+    return JSON.parse(JSON.stringify([...SLOTS_INDUMENTARIA, ...SLOTS_CLUB_INSTALACIONES]));
+  }
+
+  if (categoria === 'Liga/Torneo') {
+    return JSON.parse(JSON.stringify(SLOTS_LIGA_TORNEO));
+  }
+
+  return JSON.parse(JSON.stringify(SLOTS_INDUMENTARIA));
+}
 
 class CampanaService {
   async obtenerTodas() {
@@ -37,22 +69,27 @@ class CampanaService {
 
   async crear(datos) {
     const tipo = datos.tipo || 'donacion';
+    const categoria = datos.categoria || 'Deportista Individual';
+    const modalidadPatrocinio = tipo === 'patrocinio'
+      ? (categoria === 'Club' ? (datos.modalidadPatrocinio || 'ambos') : 'predeterminada')
+      : '';
 
     const slotsIndumentaria = tipo === 'patrocinio'
-      ? JSON.parse(JSON.stringify(SLOTS_PREDETERMINADOS))
+      ? generarSlotsPorCategoria(categoria, modalidadPatrocinio)
       : [];
 
     const nuevaCampana = {
       titulo: datos.titulo || '',
       descripcion: datos.descripcion || '',
-      categoria: datos.categoria || 'Deportista Individual',
+      categoria,
       imagenUrl: datos.imagenUrl || '',
       montoObjetivo: Number(datos.montoObjetivo) || 0,
       recaudado: Number(datos.recaudado) || 0,
       fechaLimite: datos.fechaLimite || '',
       estado: 'activa',
-      tipo: tipo,
-      slotsIndumentaria: slotsIndumentaria,
+      tipo,
+      modalidadPatrocinio,
+      slotsIndumentaria,
       ingresosExternos: [],
       gastos: [],
       creadorId: datos.creadorId || '',
@@ -72,9 +109,16 @@ class CampanaService {
     const dataActual = doc.data();
 
     const datosActualizar = {
-      ...datos,
+      titulo: datos.titulo ?? dataActual.titulo,
+      descripcion: datos.descripcion ?? dataActual.descripcion,
+      categoria: datos.categoria ?? dataActual.categoria,
+      imagenUrl: datos.imagenUrl !== undefined ? datos.imagenUrl : (dataActual.imagenUrl || ''),
+      fechaLimite: datos.fechaLimite ?? dataActual.fechaLimite,
       montoObjetivo: Number(datos.montoObjetivo) || 0,
       recaudado: Number(dataActual.recaudado) || 0,
+      slotsIndumentaria: dataActual.slotsIndumentaria || [],
+      ingresosExternos: dataActual.ingresosExternos || [],
+      gastos: dataActual.gastos || [],
       creadorId: dataActual.creadorId || '',
       creadorEmail: dataActual.creadorEmail || '',
       fechaActualizacion: new Date().toISOString()
