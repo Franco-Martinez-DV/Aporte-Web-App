@@ -160,3 +160,36 @@ exports.reservarSlot = async (req, res) => {
     res.status(400).json({ success: false, error: error.message });
   }
 };
+
+exports.registrarGasto = async (req, res) => {
+  try {
+    const { monto, concepto, fecha, comprobanteUrl, tipoArchivo } = req.body;
+
+    if (!monto || isNaN(monto) || Number(monto) <= 0) {
+      return res.status(400).json({ success: false, error: 'El monto del gasto debe ser mayor a 0' });
+    }
+    if (!concepto || concepto.trim() === '') {
+      return res.status(400).json({ success: false, error: 'El concepto del gasto es obligatorio' });
+    }
+    if (!comprobanteUrl || comprobanteUrl.trim() === '') {
+      return res.status(400).json({ success: false, error: 'Debés adjuntar la factura en PDF o imagen' });
+    }
+
+    const campanaActualizada = await campanaService.registrarGasto(req.params.id, {
+      monto,
+      concepto,
+      fecha,
+      comprobanteUrl,
+      tipoArchivo
+    });
+
+    if (!campanaActualizada) {
+      return res.status(404).json({ success: false, error: 'Campaña no encontrada' });
+    }
+
+    res.status(200).json({ success: true, data: campanaActualizada });
+  } catch (error) {
+    console.error('Error registrarGasto:', error);
+    res.status(400).json({ success: false, error: error.message });
+  }
+};

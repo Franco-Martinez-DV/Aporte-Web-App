@@ -156,6 +156,39 @@ class CampanaService {
 
     return { id, ...data, slotsIndumentaria: slots, recaudado: nuevoRecaudado };
   }
+
+  async registrarGasto(id, { monto, concepto, fecha, comprobanteUrl, tipoArchivo }) {
+    const docRef = db.collection(COLLECTION_NAME).doc(id);
+    const doc = await docRef.get();
+    if (!doc.exists) return null;
+
+    const data = doc.data();
+    const recaudadoActual = Number(data.recaudado) || 0;
+    const gastos = data.gastos || [];
+
+    const totalGastado = gastos.reduce((acc, g) => acc + Number(g.monto || 0), 0);
+    const saldoDisponible = recaudadoActual - totalGastado;
+
+    if (Number(monto) > saldoDisponible) {
+      throw new Error(`El gasto ($${Number(monto)}) supera el saldo disponible para rendir ($${saldoDisponible})`);
+    }
+
+    gastos.push({
+      monto: Number(monto),
+      concepto: concepto.trim(),
+      fecha: fecha || new Date().toISOString().split('T')[0],
+      comprobanteUrl,
+      tipoArchivo: tipoArchivo || 'pdf',
+      fechaRegistro: new Date().toISOString()
+    });
+
+    await docRef.update({
+      gastos,
+      fechaActualizacion: new Date().toISOString()
+    });
+
+    return { id, ...data, gastos };
+  }
 }
 
 module.exports = new CampanaService();

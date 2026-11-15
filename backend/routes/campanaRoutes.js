@@ -10,5 +10,6 @@ router.delete('/:id', campanaController.eliminarCampana);
 router.post('/:id/aportar', campanaController.registrarAporte);
 router.post('/:id/ingreso-externo', campanaController.registrarIngresoExterno);
 router.post('/:id/reservar-slot', campanaController.reservarSlot);
+router.post('/:id/gasto', campanaController.registrarGasto);
 
 module.exports = router;

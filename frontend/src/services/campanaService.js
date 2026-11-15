@@ -40,6 +40,11 @@ export default {
     return response.data.data;
   },
 
+  async registrarGasto(id, datosGasto) {
+    const response = await api.post(`/campanas/${id}/gasto`, datosGasto);
+    return response.data.data;
+  },
+
   async reservarSlot(id, datosSlot) {
     const response = await api.post(`/campanas/${id}/reservar-slot`, datosSlot);
     return response.data.data;

@@ -9,7 +9,8 @@ import {
   FileText,
   Pencil,
   Trash2,
-  Trophy
+  Trophy,
+  FileCheck
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -23,7 +24,8 @@ defineEmits([
   'abrir-qr',
   'abrir-transparencia',
   'editar',
-  'eliminar'
+  'eliminar',
+  'abrir-gasto'
 ]);
 
 const imagenRota = ref(false);
@@ -39,7 +41,6 @@ watch(
 <template>
   <article class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between hover:shadow-md transition">
     <div>
-      <!-- Portada de la campaña -->
       <div class="w-full h-44 bg-slate-100 overflow-hidden relative">
         <img
           v-if="campana.imagenUrl && !imagenRota"
@@ -114,6 +115,14 @@ watch(
         >
           <Receipt class="w-4 h-4" />
           <span>Declarar Ingreso Externo</span>
+        </button>
+
+        <button
+          @click="$emit('abrir-gasto', campana)"
+          class="w-full bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold py-2 px-4 rounded-lg border border-slate-300 transition flex items-center justify-center gap-2 text-sm"
+        >
+          <FileCheck class="w-4 h-4" />
+          <span>Rendir Gasto / Factura</span>
         </button>
 
         <button

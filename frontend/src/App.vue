@@ -11,6 +11,8 @@ import ModalIngresoExterno from './components/ModalIngresoExterno.vue';
 import ModalCamisetaVirtual from './components/ModalCamisetaVirtual.vue';
 import ModalQR from './components/ModalQR.vue';
 import ModalTransparencia from './components/ModalTransparencia.vue';
+import ModalGasto from './components/ModalGasto.vue';
+
 
 const campanas = ref([]);
 const cargando = ref(true);
@@ -29,6 +31,7 @@ const mostrandoModalIngresoExterno = ref(false);
 const mostrandoModalCamiseta = ref(false);
 const mostrandoModalQR = ref(false);
 const mostrandoModalTransparencia = ref(false);
+const mostrandoModalGasto = ref(false);
 
 const cargarCampanas = async () => {
   cargando.value = true;
@@ -69,6 +72,7 @@ const abrirModalConCampana = (campana, tipoModal) => {
   if (tipoModal === 'ingreso') mostrandoModalIngresoExterno.value = true;
   if (tipoModal === 'qr') mostrandoModalQR.value = true;
   if (tipoModal === 'transparencia') mostrandoModalTransparencia.value = true;
+  if (tipoModal === 'gasto') mostrandoModalGasto.value = true;
 };
 
 const guardarCampana = async (datos) => {
@@ -143,6 +147,20 @@ const eliminarCampana = async (id) => {
   }
 };
 
+const guardarGasto = async (datos) => {
+  if (enviando.value) return;
+  enviando.value = true;
+  try {
+    await campanaService.registrarGasto(campanaSeleccionada.value.id, datos);
+    mostrandoModalGasto.value = false;
+    await cargarCampanas();
+  } catch (error) {
+    alert(error.response?.data?.error || 'Error al registrar el gasto');
+  } finally {
+    enviando.value = false;
+  }
+};
+
 onMounted(() => {
   cargarCampanas();
 });
@@ -195,6 +213,7 @@ onMounted(() => {
           @abrir-transparencia="abrirModalConCampana(c, 'transparencia')"
           @editar="abrirModalEditar(c)"
           @eliminar="eliminarCampana"
+          @abrir-gasto="abrirModalConCampana(c, 'gasto')"
         />
       </div>
     </main>
@@ -242,6 +261,14 @@ onMounted(() => {
       :visible="mostrandoModalTransparencia"
       :campana="campanaSeleccionada"
       @cerrar="mostrandoModalTransparencia = false"
+    />
+
+    <ModalGasto
+      :visible="mostrandoModalGasto"
+      :campana="campanaSeleccionada"
+      :enviando="enviando"
+      @cerrar="mostrandoModalGasto = false"
+      @guardar="guardarGasto"
     />
   </div>
 </template>
