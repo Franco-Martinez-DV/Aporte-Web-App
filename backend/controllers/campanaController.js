@@ -47,7 +47,9 @@ exports.crearCampana = async (req, res) => {
     const datosNuevaCampana = {
       ...req.body,
       montoObjetivo: Number(montoObjetivo),
-      recaudado: 0
+      recaudado: 0,
+      creadorId: req.usuario.uid,
+      creadorEmail: req.usuario.email || ''
     };
 
     const nuevaCampana = await campanaService.crear(datosNuevaCampana);
@@ -79,6 +81,14 @@ exports.actualizarCampana = async (req, res) => {
     console.error('Error actualizarCampana:', error);
     res.status(500).json({ success: false, error: 'Error al actualizar campaña', details: error.message });
   }
+
+  const permiso = await campanaService.verificarEsCreador(req.params.id, req.usuario.uid);
+    if (!permiso.existe) {
+      return res.status(404).json({ success: false, error: 'Campaña no encontrada' });
+    }
+    if (!permiso.autorizado) {
+      return res.status(403).json({ success: false, error: 'Solo el creador de la campaña puede realizar esta acción' });
+    }
 };
 
 exports.eliminarCampana = async (req, res) => {
@@ -92,6 +102,14 @@ exports.eliminarCampana = async (req, res) => {
     console.error('Error eliminarCampana:', error);
     res.status(500).json({ success: false, error: 'Error al eliminar campaña', details: error.message });
   }
+
+  const permiso = await campanaService.verificarEsCreador(req.params.id, req.usuario.uid);
+    if (!permiso.existe) {
+      return res.status(404).json({ success: false, error: 'Campaña no encontrada' });
+    }
+    if (!permiso.autorizado) {
+      return res.status(403).json({ success: false, error: 'Solo el creador de la campaña puede realizar esta acción' });
+    }
 };
 
 exports.registrarAporte = async (req, res) => {
@@ -130,6 +148,14 @@ exports.registrarIngresoExterno = async (req, res) => {
     console.error('Error registrarIngresoExterno:', error);
     res.status(500).json({ success: false, error: 'Error al registrar ingreso externo', details: error.message });
   }
+
+  const permiso = await campanaService.verificarEsCreador(req.params.id, req.usuario.uid);
+    if (!permiso.existe) {
+      return res.status(404).json({ success: false, error: 'Campaña no encontrada' });
+    }
+    if (!permiso.autorizado) {
+      return res.status(403).json({ success: false, error: 'Solo el creador de la campaña puede realizar esta acción' });
+    }
 };
 
 exports.reservarSlot = async (req, res) => {
@@ -192,4 +218,12 @@ exports.registrarGasto = async (req, res) => {
     console.error('Error registrarGasto:', error);
     res.status(400).json({ success: false, error: error.message });
   }
+
+  const permiso = await campanaService.verificarEsCreador(req.params.id, req.usuario.uid);
+    if (!permiso.existe) {
+      return res.status(404).json({ success: false, error: 'Campaña no encontrada' });
+    }
+    if (!permiso.autorizado) {
+      return res.status(403).json({ success: false, error: 'Solo el creador de la campaña puede realizar esta acción' });
+    }
 };

@@ -26,11 +26,20 @@ class CampanaService {
     return { id: doc.id, ...doc.data() };
   }
 
+  async verificarEsCreador(id, uidUsuario) {
+    const doc = await db.collection(COLLECTION_NAME).doc(id).get();
+    if (!doc.exists) return { existe: false, autorizado: false };
+
+    const data = doc.data();
+    const autorizado = !data.creadorId || data.creadorId === uidUsuario;
+    return { existe: true, autorizado, data };
+  }
+
   async crear(datos) {
     const tipo = datos.tipo || 'donacion';
-    
-    const slotsIndumentaria = tipo === 'patrocinio' 
-      ? JSON.parse(JSON.stringify(SLOTS_PREDETERMINADOS)) 
+
+    const slotsIndumentaria = tipo === 'patrocinio'
+      ? JSON.parse(JSON.stringify(SLOTS_PREDETERMINADOS))
       : [];
 
     const nuevaCampana = {
@@ -45,6 +54,9 @@ class CampanaService {
       tipo: tipo,
       slotsIndumentaria: slotsIndumentaria,
       ingresosExternos: [],
+      gastos: [],
+      creadorId: datos.creadorId || '',
+      creadorEmail: datos.creadorEmail || '',
       fechaCreacion: new Date().toISOString()
     };
 
@@ -57,15 +69,19 @@ class CampanaService {
     const doc = await docRef.get();
     if (!doc.exists) return null;
 
+    const dataActual = doc.data();
+
     const datosActualizar = {
       ...datos,
       montoObjetivo: Number(datos.montoObjetivo) || 0,
-      recaudado: Number(datos.recaudado) || 0,
+      recaudado: Number(dataActual.recaudado) || 0,
+      creadorId: dataActual.creadorId || '',
+      creadorEmail: dataActual.creadorEmail || '',
       fechaActualizacion: new Date().toISOString()
     };
 
     await docRef.update(datosActualizar);
-    return { id, ...doc.data(), ...datosActualizar };
+    return { id, ...dataActual, ...datosActualizar };
   }
 
   async eliminar(id) {
@@ -77,12 +93,17 @@ class CampanaService {
     return true;
   }
 
-  async aportar(id, monto) {
+  async aportar(id, monto, uidUsuario) {
     const docRef = db.collection(COLLECTION_NAME).doc(id);
     const doc = await docRef.get();
     if (!doc.exists) return null;
 
     const data = doc.data();
+
+    if (data.creadorId && uidUsuario && data.creadorId === uidUsuario) {
+      throw new Error('No podés realizar aportes en tu propia campaña');
+    }
+
     const recaudadoActual = Number(data.recaudado) || 0;
     const nuevoRecaudado = recaudadoActual + Number(monto);
 
@@ -120,43 +141,6 @@ class CampanaService {
     return { id, ...data, recaudado: nuevoRecaudado, ingresosExternos };
   }
 
-  async reservarSlot(id, { idSlot, nombreEmpresa, cuit, logoUrl }) {
-    const docRef = db.collection(COLLECTION_NAME).doc(id);
-    const doc = await docRef.get();
-    if (!doc.exists) return null;
-
-    const data = doc.data();
-    const slots = data.slotsIndumentaria || [];
-    
-    const slotIndex = slots.findIndex(s => s.idSlot === idSlot);
-    if (slotIndex === -1) {
-      throw new Error('El slot seleccionado no existe');
-    }
-
-    if (slots[slotIndex].estado === 'reservado') {
-      throw new Error('El espacio publicitario ya se encuentra ocupado');
-    }
-
-    slots[slotIndex].estado = 'reservado';
-    slots[slotIndex].sponsor = {
-      nombreEmpresa,
-      cuit: cuit || '',
-      logoUrl: logoUrl || '',
-      fechaReserva: new Date().toISOString()
-    };
-
-    const recaudadoActual = Number(data.recaudado) || 0;
-    const nuevoRecaudado = recaudadoActual + Number(slots[slotIndex].precio);
-
-    await docRef.update({
-      slotsIndumentaria: slots,
-      recaudado: nuevoRecaudado,
-      fechaActualizacion: new Date().toISOString()
-    });
-
-    return { id, ...data, slotsIndumentaria: slots, recaudado: nuevoRecaudado };
-  }
-
   async registrarGasto(id, { monto, concepto, fecha, comprobanteUrl, tipoArchivo }) {
     const docRef = db.collection(COLLECTION_NAME).doc(id);
     const doc = await docRef.get();
@@ -188,6 +172,47 @@ class CampanaService {
     });
 
     return { id, ...data, gastos };
+  }
+
+  async reservarSlot(id, { idSlot, nombreEmpresa, cuit, logoUrl, uidUsuario }) {
+    const docRef = db.collection(COLLECTION_NAME).doc(id);
+    const doc = await docRef.get();
+    if (!doc.exists) return null;
+
+    const data = doc.data();
+
+    if (data.creadorId && uidUsuario && data.creadorId === uidUsuario) {
+      throw new Error('No podés patrocinar tu propia campaña');
+    }
+
+    const slots = data.slotsIndumentaria || [];
+    const slotIndex = slots.findIndex(s => s.idSlot === idSlot);
+    if (slotIndex === -1) {
+      throw new Error('El slot seleccionado no existe');
+    }
+
+    if (slots[slotIndex].estado === 'reservado') {
+      throw new Error('El espacio publicitario ya se encuentra ocupado');
+    }
+
+    slots[slotIndex].estado = 'reservado';
+    slots[slotIndex].sponsor = {
+      nombreEmpresa,
+      cuit: cuit || '',
+      logoUrl: logoUrl || '',
+      fechaReserva: new Date().toISOString()
+    };
+
+    const recaudadoActual = Number(data.recaudado) || 0;
+    const nuevoRecaudado = recaudadoActual + Number(slots[slotIndex].precio);
+
+    await docRef.update({
+      slotsIndumentaria: slots,
+      recaudado: nuevoRecaudado,
+      fechaActualizacion: new Date().toISOString()
+    });
+
+    return { id, ...data, slotsIndumentaria: slots, recaudado: nuevoRecaudado };
   }
 }
 

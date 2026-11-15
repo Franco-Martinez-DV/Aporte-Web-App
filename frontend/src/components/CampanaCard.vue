@@ -1,34 +1,39 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { calcularPorcentaje, formatearMoneda } from '../helpers/formatters';
 import {
   Shirt,
   HeartHandshake,
   Receipt,
+  FileCheck,
   QrCode,
   FileText,
   Pencil,
   Trash2,
-  Trophy,
-  FileCheck
+  Trophy
 } from 'lucide-vue-next';
 
 const props = defineProps({
-  campana: { type: Object, required: true }
+  campana: { type: Object, required: true },
+  usuarioActual: { type: Object, default: null }
 });
 
 defineEmits([
   'abrir-camiseta',
   'abrir-aporte',
   'abrir-ingreso',
+  'abrir-gasto',
   'abrir-qr',
   'abrir-transparencia',
   'editar',
-  'eliminar',
-  'abrir-gasto'
+  'eliminar'
 ]);
 
 const imagenRota = ref(false);
+
+const esCreador = computed(() => {
+  return Boolean(props.usuarioActual && props.campana.creadorId === props.usuarioActual.uid);
+});
 
 watch(
   () => props.campana.imagenUrl,
@@ -92,38 +97,42 @@ watch(
       </div>
 
       <div class="space-y-2 mb-3">
-        <button
-          v-if="campana.tipo === 'patrocinio'"
-          @click="$emit('abrir-camiseta', campana)"
-          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2 text-sm shadow-sm"
-        >
-          <Shirt class="w-4 h-4" />
-          <span>Ver / Patrocinar Camiseta Virtual</span>
-        </button>
+        <template v-if="!esCreador">
+          <button
+            v-if="campana.tipo === 'patrocinio'"
+            @click="$emit('abrir-camiseta', campana)"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2 text-sm shadow-sm"
+          >
+            <Shirt class="w-4 h-4" />
+            <span>Ver / Patrocinar Camiseta Virtual</span>
+          </button>
 
-        <button
-          @click="$emit('abrir-aporte', campana)"
-          class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold py-2 px-4 rounded-lg border border-emerald-200 transition flex items-center justify-center gap-2 text-sm"
-        >
-          <HeartHandshake class="w-4 h-4" />
-          <span>Simular Aporte</span>
-        </button>
+          <button
+            @click="$emit('abrir-aporte', campana)"
+            class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold py-2 px-4 rounded-lg border border-emerald-200 transition flex items-center justify-center gap-2 text-sm"
+          >
+            <HeartHandshake class="w-4 h-4" />
+            <span>Simular Aporte</span>
+          </button>
+        </template>
 
-        <button
-          @click="$emit('abrir-ingreso', campana)"
-          class="w-full bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold py-2 px-4 rounded-lg border border-amber-200 transition flex items-center justify-center gap-2 text-sm"
-        >
-          <Receipt class="w-4 h-4" />
-          <span>Declarar Ingreso Externo</span>
-        </button>
+        <template v-if="esCreador">
+          <button
+            @click="$emit('abrir-ingreso', campana)"
+            class="w-full bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold py-2 px-4 rounded-lg border border-amber-200 transition flex items-center justify-center gap-2 text-sm"
+          >
+            <Receipt class="w-4 h-4" />
+            <span>Declarar Ingreso Externo</span>
+          </button>
 
-        <button
-          @click="$emit('abrir-gasto', campana)"
-          class="w-full bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold py-2 px-4 rounded-lg border border-slate-300 transition flex items-center justify-center gap-2 text-sm"
-        >
-          <FileCheck class="w-4 h-4" />
-          <span>Rendir Gasto / Factura</span>
-        </button>
+          <button
+            @click="$emit('abrir-gasto', campana)"
+            class="w-full bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold py-2 px-4 rounded-lg border border-slate-300 transition flex items-center justify-center gap-2 text-sm"
+          >
+            <FileCheck class="w-4 h-4" />
+            <span>Rendir Gasto / Factura</span>
+          </button>
+        </template>
 
         <button
           @click="$emit('abrir-qr', campana)"
@@ -142,7 +151,7 @@ watch(
         </button>
       </div>
 
-      <div class="flex justify-between items-center pt-3 border-t border-slate-100">
+      <div v-if="esCreador" class="flex justify-between items-center pt-3 border-t border-slate-100">
         <button
           @click="$emit('editar', campana)"
           class="text-xs font-semibold text-blue-600 hover:text-blue-800 px-3 py-1.5 rounded hover:bg-blue-50 transition inline-flex items-center gap-1.5"

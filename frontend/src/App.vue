@@ -1,5 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { onAuthStateChanged, signOut } from '@firebase/auth';
+import { auth } from './firebase';
 import { Plus } from 'lucide-vue-next';
 import campanaService from './services/campanaService';
 import NavbarHeader from './components/NavbarHeader.vue';
@@ -8,30 +10,32 @@ import CampanaCard from './components/CampanaCard.vue';
 import ModalCampanaForm from './components/ModalCampanaForm.vue';
 import ModalAporte from './components/ModalAporte.vue';
 import ModalIngresoExterno from './components/ModalIngresoExterno.vue';
-import ModalCamisetaVirtual from './components/ModalCamisetaVirtual.vue';
-import ModalQR from './components/ModalQR.vue';
-import ModalTransparencia from './components/ModalTransparencia.vue';
 import ModalGasto from './components/ModalGasto.vue';
-
+import ModalCamisetaVirtual from './components/ModalCamisetaVirtual.vue';
+import ModalQr from './components/ModalQr.vue';
+import ModalTransparencia from './components/ModalTransparencia.vue';
+import ModalAuth from './components/ModalAuth.vue';
 
 const campanas = ref([]);
 const cargando = ref(true);
 const enviando = ref(false);
+const usuarioActual = ref(null);
 
 const textoBusqueda = ref('');
 const categoriaSeleccionada = ref('Todas');
 const categorias = ['Todas', 'Deportista Individual', 'Club', 'Liga/Torneo'];
 
+const mostrandoModalAuth = ref(false);
 const mostrandoModalForm = ref(false);
 const modoEdicion = ref(false);
 const campanaSeleccionada = ref(null);
 
 const mostrandoModalAporte = ref(false);
 const mostrandoModalIngresoExterno = ref(false);
+const mostrandoModalGasto = ref(false);
 const mostrandoModalCamiseta = ref(false);
 const mostrandoModalQR = ref(false);
 const mostrandoModalTransparencia = ref(false);
-const mostrandoModalGasto = ref(false);
 
 const cargarCampanas = async () => {
   cargando.value = true;
@@ -41,6 +45,15 @@ const cargarCampanas = async () => {
     alert('Error al conectar con el backend');
   } finally {
     cargando.value = false;
+  }
+};
+
+const cerrarSesion = async () => {
+  try {
+    await signOut(auth);
+    usuarioActual.value = null;
+  } catch (error) {
+    alert('Error al cerrar sesión');
   }
 };
 
@@ -54,25 +67,38 @@ const campanasFiltradas = computed(() => {
 });
 
 const abrirModalNuevo = () => {
+  if (!usuarioActual.value) {
+    mostrandoModalAuth.value = true;
+    return;
+  }
   modoEdicion.value = false;
   campanaSeleccionada.value = null;
   mostrandoModalForm.value = true;
 };
 
 const abrirModalEditar = (campana) => {
+  if (!usuarioActual.value) {
+    mostrandoModalAuth.value = true;
+    return;
+  }
   modoEdicion.value = true;
   campanaSeleccionada.value = campana;
   mostrandoModalForm.value = true;
 };
 
 const abrirModalConCampana = (campana, tipoModal) => {
+  if (tipoModal !== 'qr' && tipoModal !== 'transparencia' && !usuarioActual.value) {
+    mostrandoModalAuth.value = true;
+    return;
+  }
+
   campanaSeleccionada.value = campana;
   if (tipoModal === 'camiseta') mostrandoModalCamiseta.value = true;
   if (tipoModal === 'aporte') mostrandoModalAporte.value = true;
   if (tipoModal === 'ingreso') mostrandoModalIngresoExterno.value = true;
+  if (tipoModal === 'gasto') mostrandoModalGasto.value = true;
   if (tipoModal === 'qr') mostrandoModalQR.value = true;
   if (tipoModal === 'transparencia') mostrandoModalTransparencia.value = true;
-  if (tipoModal === 'gasto') mostrandoModalGasto.value = true;
 };
 
 const guardarCampana = async (datos) => {
@@ -121,6 +147,20 @@ const guardarIngresoExterno = async (datos) => {
   }
 };
 
+const guardarGasto = async (datos) => {
+  if (enviando.value) return;
+  enviando.value = true;
+  try {
+    await campanaService.registrarGasto(campanaSeleccionada.value.id, datos);
+    mostrandoModalGasto.value = false;
+    await cargarCampanas();
+  } catch (error) {
+    alert(error.response?.data?.error || 'Error al registrar el gasto');
+  } finally {
+    enviando.value = false;
+  }
+};
+
 const procesarReservaSlot = async (payload) => {
   if (enviando.value) return;
   enviando.value = true;
@@ -137,38 +177,35 @@ const procesarReservaSlot = async (payload) => {
 };
 
 const eliminarCampana = async (id) => {
+  if (!usuarioActual.value) {
+    mostrandoModalAuth.value = true;
+    return;
+  }
   if (confirm('¿Seguro que deseas eliminar esta campaña?')) {
     try {
       await campanaService.eliminarCampana(id);
       await cargarCampanas();
     } catch (error) {
-      alert('Error al eliminar la campaña');
+      alert(error.response?.data?.error || 'Error al eliminar la campaña');
     }
   }
 };
 
-const guardarGasto = async (datos) => {
-  if (enviando.value) return;
-  enviando.value = true;
-  try {
-    await campanaService.registrarGasto(campanaSeleccionada.value.id, datos);
-    mostrandoModalGasto.value = false;
-    await cargarCampanas();
-  } catch (error) {
-    alert(error.response?.data?.error || 'Error al registrar el gasto');
-  } finally {
-    enviando.value = false;
-  }
-};
-
 onMounted(() => {
+  onAuthStateChanged(auth, (user) => {
+    usuarioActual.value = user;
+  });
   cargarCampanas();
 });
 </script>
 
 <template>
   <div class="min-h-screen bg-[#F5F5F5] text-slate-800 font-sans">
-    <NavbarHeader />
+    <NavbarHeader
+      :usuario="usuarioActual"
+      @abrir-auth="mostrandoModalAuth = true"
+      @cerrar-sesion="cerrarSesion"
+    />
 
     <main class="max-w-6xl mx-auto px-4 py-8">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
@@ -206,17 +243,23 @@ onMounted(() => {
           v-for="c in campanasFiltradas"
           :key="c.id"
           :campana="c"
+          :usuario-actual="usuarioActual"
           @abrir-camiseta="abrirModalConCampana(c, 'camiseta')"
           @abrir-aporte="abrirModalConCampana(c, 'aporte')"
           @abrir-ingreso="abrirModalConCampana(c, 'ingreso')"
+          @abrir-gasto="abrirModalConCampana(c, 'gasto')"
           @abrir-qr="abrirModalConCampana(c, 'qr')"
           @abrir-transparencia="abrirModalConCampana(c, 'transparencia')"
           @editar="abrirModalEditar(c)"
           @eliminar="eliminarCampana"
-          @abrir-gasto="abrirModalConCampana(c, 'gasto')"
         />
       </div>
     </main>
+
+    <ModalAuth
+      :visible="mostrandoModalAuth"
+      @cerrar="mostrandoModalAuth = false"
+    />
 
     <ModalCampanaForm
       :visible="mostrandoModalForm"
@@ -243,6 +286,14 @@ onMounted(() => {
       @guardar="guardarIngresoExterno"
     />
 
+    <ModalGasto
+      :visible="mostrandoModalGasto"
+      :campana="campanaSeleccionada"
+      :enviando="enviando"
+      @cerrar="mostrandoModalGasto = false"
+      @guardar="guardarGasto"
+    />
+
     <ModalCamisetaVirtual
       :visible="mostrandoModalCamiseta"
       :campana="campanaSeleccionada"
@@ -251,7 +302,7 @@ onMounted(() => {
       @reservar="procesarReservaSlot"
     />
 
-    <ModalQR
+    <ModalQr
       :visible="mostrandoModalQR"
       :campana="campanaSeleccionada"
       @cerrar="mostrandoModalQR = false"
@@ -261,14 +312,6 @@ onMounted(() => {
       :visible="mostrandoModalTransparencia"
       :campana="campanaSeleccionada"
       @cerrar="mostrandoModalTransparencia = false"
-    />
-
-    <ModalGasto
-      :visible="mostrandoModalGasto"
-      :campana="campanaSeleccionada"
-      :enviando="enviando"
-      @cerrar="mostrandoModalGasto = false"
-      @guardar="guardarGasto"
     />
   </div>
 </template>
