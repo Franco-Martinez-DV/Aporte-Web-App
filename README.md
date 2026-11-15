@@ -10,9 +10,9 @@ El sistema permite gestionar campañas de recaudación, comercializar espacios p
 
 El proyecto implementa una **arquitectura cliente-servidor desacoplada en 3 capas**, comunicada mediante una API RESTful en formato JSON:
 
-1. **Capa de Presentación (Frontend - SPA):** Desarrollada en **Vue 3** (Composition API) y estilizada con **Tailwind CSS**, organizada de forma modular separando vistas, componentes reutilizables, helpers de formateo y servicios de consumo HTTP
+1. **Capa de Presentación (Frontend - SPA):** Desarrollada en **Vue 3** (Composition API) y estilizada con **Tailwind CSS**, organizada de forma modular separando vistas, componentes reutilizables, modales operativos, helpers de formateo y servicios de consumo HTTP, la interfaz adapta dinámicamente sus acciones según si el usuario autenticado es el **creador de la campaña** o un **donante/sponsor**
 2. **Capa de Lógica de Negocio (Backend - API REST):** Servidor construido con **Node.js** y **Express**, estructurado bajo el patrón *Routes -> Controllers -> Services* con validación de entradas y actualización atómica de saldos
-3. **Capa de Persistencia (Base de Datos NoSQL):** Almacenamiento en tiempo real en **Cloud Firestore** (Firebase), administrado desde el servidor mediante **Firebase Admin SDK**
+3. **Capa de Persistencia y multimedia (Base de Datos NoSQL):** Almacenamiento en tiempo real en **Cloud Firestore** (Firebase), administrado desde el servidor mediante **Firebase Admin SDK**, complementado con **Cloudinary** para el alojamiento de imágenes de portada y comprobantes/facturas en PDF
 
 ---
 
@@ -27,7 +27,9 @@ El proyecto implementa una **arquitectura cliente-servidor desacoplada en 3 capa
 ### Frontend (`frontend/package.json`)
 * **Vue 3 (`vue`):** Framework progresivo para interfaces reactivas mediante `<script setup>`
 * **Vite (`vite`):** Empaquetador y servidor de desarrollo rápido
+* **Firebase JS SDK (`firebase`):** Registro, inicio de sesión y gestión de sesión con correo y contraseña
 * **Tailwind CSS (`tailwindcss`):** Framework de utilidades CSS para diseño responsivo e identidad visual
+* **Lucide Icons (`lucide-vue-next`):** Iconografía vectorial de línea continua
 * **Axios (`axios`):** Cliente HTTP basado en promesas para consumir la API REST
 
 ---
@@ -36,11 +38,17 @@ El proyecto implementa una **arquitectura cliente-servidor desacoplada en 3 capa
 
 Por motivos de seguridad, las credenciales y archivos de entorno locales están excluidos del control de versiones mediante `.gitignore`
 
-1. En la carpeta `backend/`, creá un archivo `.env` tomando como referencia `backend/.env.example`:
+1. En la carpeta `frontend/`, creá un archivo `.env` tomando como referencia `frontend/.env.example` y completalo con las credenciales provistas en el archivo `.env` adjunto en el espacio de entrega del campus virtual
+   ```
+   frontend/.env
+   ```
+
+2. En la carpeta `backend/`, creá un archivo `.env` tomando como referencia `backend/.env.example`:
    ```env
    PORT=5000
+   NODE_ENV=development
    ```
-2. 2. Descargá el archivo `serviceAccountKey.json` adjunto en el espacio de entrega del campus virtual (por seguridad no se incluye en el repositorio) y ubicalo en:
+3. Descargá el archivo `serviceAccountKey.json` adjunto en el espacio de entrega del campus virtual (por seguridad no se incluye en el repositorio) y ubicalo en:
    ```text
    backend/config/serviceAccountKey.json
    ```
@@ -54,7 +62,7 @@ Asegurarse de tener instalado **Node.js (v18 o superior)** y **npm**. Cloná el 
 ```bash
 # 1. Clonar el repositorio
 git clone https://github.com/Franco-Martinez-DV/Aporte-Web-App.git
-cd Aporte-Web-Backend
+cd Aporte-Web-App
 
 # 2. Instalar dependencias del Backend
 cd backend
