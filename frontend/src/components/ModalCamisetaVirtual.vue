@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { Shirt, Building2, Trophy } from 'lucide-vue-next';
+import { Shirt, Building2, Trophy, CreditCard } from 'lucide-vue-next';
 import { formatearMoneda } from '../helpers/formatters';
 
 const props = defineProps({
@@ -9,7 +9,7 @@ const props = defineProps({
   enviando: { type: Boolean, default: false }
 });
 
-const emit = defineEmits(['cerrar', 'reservar']);
+const emit = defineEmits(['cerrar', 'reservar', 'pagar-mp']);
 
 const slotSeleccionado = ref(null);
 const formularioSponsor = ref({
@@ -69,23 +69,33 @@ const seleccionarSlot = (slot) => {
   slotSeleccionado.value = slot;
 };
 
-const confirmarReserva = () => {
-  if (props.enviando) return;
+const validarFormularioSponsor = () => {
   if (!slotSeleccionado.value) {
     alert('Seleccioná un espacio publicitario disponible');
-    return;
+    return false;
   }
   if (!formularioSponsor.value.nombreEmpresa.trim()) {
     alert('Ingresá el nombre o razón social de la empresa sponsor');
-    return;
+    return false;
   }
+  return true;
+};
 
-  emit('reservar', {
-    idSlot: slotSeleccionado.value.idSlot,
-    nombreEmpresa: formularioSponsor.value.nombreEmpresa,
-    cuit: formularioSponsor.value.cuit,
-    logoUrl: formularioSponsor.value.logoUrl
-  });
+const construirPayload = () => ({
+  idSlot: slotSeleccionado.value.idSlot,
+  nombreEmpresa: formularioSponsor.value.nombreEmpresa,
+  cuit: formularioSponsor.value.cuit,
+  logoUrl: formularioSponsor.value.logoUrl
+});
+
+const pagarReservaMP = () => {
+  if (props.enviando || !validarFormularioSponsor()) return;
+  emit('pagar-mp', construirPayload());
+};
+
+const confirmarReservaSimulada = () => {
+  if (props.enviando || !validarFormularioSponsor()) return;
+  emit('reservar', construirPayload());
 };
 </script>
 
@@ -155,7 +165,7 @@ const confirmarReserva = () => {
           (${{ formatearMoneda(slotSeleccionado.precio) }})
         </h4>
 
-        <form @submit.prevent="confirmarReserva" class="space-y-3">
+        <form @submit.prevent="pagarReservaMP" class="space-y-3">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Empresa / Comercio</label>
@@ -178,22 +188,36 @@ const confirmarReserva = () => {
             </div>
           </div>
 
-          <div class="flex justify-end gap-3 pt-2">
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
             <button
               type="button"
               :disabled="enviando"
-              @click="slotSeleccionado = null"
-              class="px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              @click="confirmarReservaSimulada"
+              class="text-xs font-semibold text-blue-700 hover:text-blue-900 underline disabled:opacity-50"
             >
-              Cancelar
+              Simular reserva directa
             </button>
-            <button
-              type="submit"
-              :disabled="enviando"
-              class="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {{ enviando ? 'Reservando...' : `Confirmar Patrocinio ($${formatearMoneda(slotSeleccionado.precio)})` }}
-            </button>
+
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                :disabled="enviando"
+                @click="slotSeleccionado = null"
+                class="px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                :disabled="enviando"
+                class="px-4 py-2 text-xs font-bold text-white bg-[#009EE3] hover:bg-[#0082BC] rounded-lg shadow transition inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <CreditCard class="w-3.5 h-3.5" />
+                <span>
+                  {{ enviando ? 'Redirigiendo...' : `Pagar con Mercado Pago ($${formatearMoneda(slotSeleccionado.precio)})` }}
+                </span>
+              </button>
+            </div>
           </div>
         </form>
       </div>

@@ -2,7 +2,7 @@
 
 **APORTE** es una plataforma web de financiación diseñada para conectar a deportistas amateurs, clubes de barrio y ligas regionales con donantes individuales y patrocinadores comerciales
 
-El sistema permite gestionar campañas de recaudación, comercializar espacios publicitarios, declarar ingresos obtenidos por fuera de la plataforma y generar material de difusión con códigos QR dinámicos
+El sistema permite gestionar campañas de recaudación, espacios publicitarios dinámicos según la categoría del proyecto (indumentaria deportiva, instalaciones/predios de clubes y naming o cartelería de ligas/torneos), procesar aportes y patrocinios mediante Mercado Pago (Checkout Pro en modo Sandbox) declarar ingresos obtenidos por fuera de la plataforma y generar material de difusión con códigos QR dinámicos
 
 ---
 
@@ -10,8 +10,8 @@ El sistema permite gestionar campañas de recaudación, comercializar espacios p
 
 El proyecto implementa una **arquitectura cliente-servidor desacoplada en 3 capas**, comunicada mediante una API RESTful en formato JSON:
 
-1. **Capa de Presentación (Frontend - SPA):** Desarrollada en **Vue 3** (Composition API) y estilizada con **Tailwind CSS**, organizada de forma modular separando vistas, componentes reutilizables, modales operativos, helpers de formateo y servicios de consumo HTTP, la interfaz adapta dinámicamente sus acciones según si el usuario autenticado es el **creador de la campaña** o un **donante/sponsor**
-2. **Capa de Lógica de Negocio (Backend - API REST):** Servidor construido con **Node.js** y **Express**, estructurado bajo el patrón *Routes -> Controllers -> Services* con validación de entradas y actualización atómica de saldos
+1. **Capa de Presentación (Frontend - SPA):** Desarrollada en **Vue 3** (Composition API) y estilizada con **Tailwind CSS**, organizada de forma modular separando vistas, componentes reutilizables, modales operativos, helpers de formateo y servicios de consumo HTTP, la interfaz adapta dinámicamente sus acciones según si el usuario autenticado es el **creador de la campaña** o un **donante/sponsor**,  y sincroniza automáticamente el estado de los pagos iniciados en Mercado Pago
+2. **Capa de Lógica de Negocio (Backend - API REST):** Servidor construido con **Node.js** y **Express**, estructurado bajo el patrón *Routes -> Controllers -> Services* con validación de entradas, verificación idempotente de pagos contra la API de Mercado Pago y actualización atómica de saldos
 3. **Capa de Persistencia y multimedia (Base de Datos NoSQL):** Almacenamiento en tiempo real en **Cloud Firestore** (Firebase), administrado desde el servidor mediante **Firebase Admin SDK**, complementado con **Cloudinary** para el alojamiento de imágenes de portada y comprobantes/facturas en PDF
 
 ---
@@ -21,6 +21,7 @@ El proyecto implementa una **arquitectura cliente-servidor desacoplada en 3 capa
 ### Backend (`backend/package.json`)
 * **Express:** Framework web para la construcción de rutas y endpoints REST
 * **Firebase Admin SDK (`firebase-admin`):** Conexión segura y operaciones CRUD contra Cloud Firestore
+* **Mercado Pago SDK (`mercadopago`):** Generación de preferencias de pago (Checkout Pro) y consulta/verificación de operaciones acreditadas en entorno Sandbox
 * **CORS (`cors`):** Habilitación de peticiones cruzadas entre el cliente web y la API
 * **Dotenv (`dotenv`):** Carga de variables de entorno desde archivos `.env`
 
@@ -43,10 +44,9 @@ Por motivos de seguridad, las credenciales y archivos de entorno locales están 
    frontend/.env
    ```
 
-2. En la carpeta `backend/`, creá un archivo `.env` tomando como referencia `backend/.env.example`:
+2. En la carpeta `backend/`, creá un archivo `.env` tomando como referencia `backend/.env.example` y completalo con las credenciales provistas en el archivo `.env` adjunto en el espacio de entrega del campus virtual
    ```env
-   PORT=5000
-   NODE_ENV=development
+   backend/.env
    ```
 3. Descargá el archivo `serviceAccountKey.json` adjunto en el espacio de entrega del campus virtual (por seguridad no se incluye en el repositorio) y ubicalo en:
    ```text

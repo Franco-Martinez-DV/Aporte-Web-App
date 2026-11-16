@@ -58,5 +58,23 @@ export default {
   async reservarSlot(id, datosSlot) {
     const response = await api.post(`/campanas/${id}/reservar-slot`, datosSlot);
     return response.data.data;
+  },
+
+  async crearPreferenciaPago(datos) {
+    const response = await api.post('/pagos/preferencia', {
+      ...datos,
+      urlRetornoBase: window.location.origin
+    });
+    return response.data.data;
+  },
+
+  async confirmarPagoMP(datos) {
+    const response = await api.post('/pagos/confirmar', datos);
+    return response.data.data;
+  },
+
+  async sincronizarPagosMP() {
+    const response = await api.post('/pagos/sincronizar');
+    return response.data.data;
   }
 };

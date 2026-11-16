@@ -5,6 +5,7 @@ require('dotenv').config();
 require('./config/firebase');
 
 const campanaRoutes = require('./routes/campanaRoutes');
+const pagoRoutes = require('./routes/pagoRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -21,6 +22,7 @@ app.get('/api/v1/health', (req, res) => {
 });
 
 app.use('/api/v1/campanas', campanaRoutes);
+app.use('/api/v1/pagos', pagoRoutes);
 
 app.use((req, res) => {
   res.status(404).json({

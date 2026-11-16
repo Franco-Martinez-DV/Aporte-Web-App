@@ -35,7 +35,7 @@ const formulario = ref({
 const etiquetaBotonPatrocinio = computed(() => {
   if (formulario.value.categoria === 'Club') return 'Patrocinio de Club';
   if (formulario.value.categoria === 'Liga/Torneo') return 'Patrocinio de Liga/Torneo';
-  return 'Camiseta';
+  return 'Patrocinio de Camiseta';
 });
 
 watch(
